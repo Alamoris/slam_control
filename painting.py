@@ -1,48 +1,46 @@
 import sys, math
 
-from PyQt5.QtWidgets import QWidget, QApplication
+from PyQt5.QtWidgets import QWidget, QApplication, QFrame
 from PyQt5.QtGui import QPen, QPainter, QColor
 from PyQt5.QtCore import Qt, QPoint, QBasicTimer
 
 
-class MainWidget(QWidget):
-    def __init__(self):
-        super().__init__()
-
+class SearchingMap(QFrame):
+    def __init__(self, parent):
+        super().__init__(parent)
         self.initMain()
 
     def initMain(self):
+
         self.timer = QBasicTimer()
-        self.timer.start(20, self)
         self.iterat = 0
+        self.setStyleSheet("border:3px solid rgb(0, 0, 0);")
 
-        #self.points = [(50, 500), (50, 200), (400, 500), (50, 700)]
-        #self.connections = [(2, 0), (0, 2), (0, 3)]
-        #self.points = [(50, 500), (50, 200), (400, 300), (250, 500), (150, 800)]
-        #self.connections = [(0, 1), (1, 2), (1, 3), (0, 4)]
-        self.points = [(500, 500), (500, 200), (800, 500), (500, 800), (200, 500), (800, 200), (800, 800), (200, 800), (200, 200)]
-        self.connections = [(0, 1), (0, 2), (0, 3), (0, 4), (1, 5), (2, 6), (3, 7), (4, 8)]
-        self.speed = 5
-        self.painting_connections = [[0, self.speed],
-                                     [1, self.speed],
-                                     [2, self.speed],
-                                     [3, self.speed]]
+    def initStartOptions(self, connections, points, robot_value, speed):
+        if not speed:
+            speed = 1
+        self.timer.start(int(speed), self)
+        self.robot_value = robot_value
+        self.connections = connections
+        self.points = points
+        self.points = [(point.x(), point.y()) for point in self.points.copy()]
+        self.painting_connections = []
         self.cur_map = []
+        self.speed = 2
 
-        self.setGeometry(300, 100, 1000, 1000)
-        self.setWindowTitle('Triangle paint')
-        self.show()
+        self.takeStartConnections()
+
+    def takeStartConnections(self):
+        for con in self.connections:
+            if con[0] == 0:
+                self.painting_connections.append([self.connections.index(con), self.speed])
 
     def paintEvent(self, event):
         qp = QPainter(self)
         self.painttt(qp)
 
     def painttt(self, qp):
-        pen = QPen(Qt.blue, 3)
-        qp.setPen(pen)
-        self.init_map_con(qp)
-
-        pen = QPen(Qt.green, 8)
+        pen = QPen(Qt.darkMagenta, 3)
         qp.setPen(pen)
 
         # Рисование пройденных ребер
@@ -58,6 +56,7 @@ class MainWidget(QWidget):
                                                              self.points[self.connections[con[0]][1]][0],
                                                              self.points[self.connections[con[0]][1]][1],
                                                              con[1])
+
             self.painting_connections[con_index][1] = length
 
             # Костыль переворачивающий значение найденной точки, поскольку по формуле новая точка всегда направлена
@@ -96,11 +95,6 @@ class MainWidget(QWidget):
         self.iterat += 1
         self.update()
 
-    def init_map_con(self, qp):
-        for x in self.connections:
-            qp.drawLine(QPoint(self.points[x[0]][0], self.points[x[0]][1]),
-                        QPoint(self.points[x[1]][0], self.points[x[1]][1]))
-
     # Функция выведена из уравнения длинны в прямоугольном треугольнике и уравнения прямой по двум точкам
     def calculate_next_point(self, first_x, first_y, fin_x, fin_y, length):
         # Проверяем будет ли следующий шаг увеличения длинны больше длинны ребра и если будет возвращаем последнюю точку
@@ -130,5 +124,5 @@ class MainWidget(QWidget):
 if __name__ == '__main__':
 
     app = QApplication(sys.argv)
-    ex = MainWidget()
+    ex = SearchingMap()
     sys.exit(app.exec_())

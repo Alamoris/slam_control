@@ -1,11 +1,12 @@
-import sys, math
-
+import sys
 import json
 
 from PyQt5.QtCore import QBasicTimer, pyqtSignal, Qt, QPoint
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QDesktopWidget, QLabel, QFrame, QLineEdit,
                              QHBoxLayout, QVBoxLayout, QPushButton, QAction)
 from PyQt5.QtGui import QCursor, QPainter, QPen, QColor, QIcon
+
+from painting import SearchingMap
 
 
 class MainWidget(QMainWindow):
@@ -116,16 +117,10 @@ class RobotWidget(QWidget):
         return widget, save_name, load_name, robot_field, speed_edit
 
     def saveToFile(self):
-        print(self.visual_widget.connections)
-        print(self.visual_widget.point_arr)
-        decoded_conncections = [((x[0].x(), x[0].y()), (x[1].x(), x[1].y())) for x in self.visual_widget.connections]
         decoded_point_array = [(x.x(), x.y()) for x in self.visual_widget.point_arr]
 
-        connections_dumb = json.dumps(decoded_conncections)
-        point_dumb = json.dumps(decoded_point_array)
-
         with open(self.save_name.text() + '.json', 'w') as outfile:
-            json.dump((decoded_conncections, decoded_point_array), outfile)
+            json.dump((self.visual_widget.connections, decoded_point_array), outfile)
 
         self.msg2Statusbar.emit("File successfully saved")
 
@@ -133,10 +128,11 @@ class RobotWidget(QWidget):
         if not self.load_name.text():
             self.msg2Statusbar.emit("Please enter the file name to load configurations")
             return
+
         with open(self.load_name.text() + '.json', 'r') as infile:
             connections, points = json.load(infile)
 
-        self.visual_widget.connections = [(QPoint(x[0][0], x[0][1]), QPoint(x[1][0], x[1][1])) for x in connections]
+        self.visual_widget.connections = connections
         self.visual_widget.point_arr = [QPoint(x[0], x[1]) for x in points]
 
         self.visual_widget.update()
@@ -190,7 +186,7 @@ class SetGraphWidget(QWidget):
         qp.setPen(line_pen)
 
         for x in self.connections:
-            qp.drawLine(x[0], x[1])
+            qp.drawLine(self.point_arr[x[0]], self.point_arr[x[1]])
 
         # if len(self.point_arr) > 1:
         for x in self.point_arr:
@@ -198,7 +194,8 @@ class SetGraphWidget(QWidget):
             qp.drawPoint(x)
 
     def mousePressEvent(self, event):
-        cur_point = QPoint(self.curs.pos())
+        cur_point = self.curs.pos()
+
         cur_point = self.mapFromGlobal(cur_point)
 
         if self.first_point is None:
@@ -209,7 +206,7 @@ class SetGraphWidget(QWidget):
                 self.pointCircle(cur_point)
         else:
             self.point_arr.append(cur_point)
-            self.connections.append((self.first_point, cur_point))
+            self.connections.append((self.point_arr.index(self.first_point), self.point_arr.index(cur_point)))
             self.first_point = None
 
         self.iterator += 1
@@ -308,39 +305,11 @@ class RealMap(QFrame):
         dot_pen = QPen(Qt.blue, 6)
         qp.setPen(line_pen)
         for x in self.connections:
-            qp.drawLine(x[0], x[1])
+            qp.drawLine(self.points[x[0]], self.points[x[1]])
         for x in self.points:
             qp.setPen(dot_pen)
             qp.drawPoint(x)
 
-
-class SearchingMap(QFrame):
-    def __init__(self, parent):
-        super().__init__(parent)
-
-        self.build_searching_map()
-
-    def build_searching_map(self):
-        self.timer = QBasicTimer()
-        self.iterator = 0
-
-        self.setStyleSheet("border:3px solid rgb(0, 0, 0);")
-
-    def initStartOptions(self, connections, points, robot_value, speed):
-        self.robot_value = robot_value
-        self.speed = speed
-        self.known_connections = connections
-        self.known_point = points
-
-    def paintEvent(self, event):
-        qp = QPainter(self)
-        self.drawSearchingMap(qp)
-
-    def drawSearchingMap(self, qp):
-        pen = QPen(Qt.darkMagenta, 6)
-        qp.setPen(pen)
-        if self.iterator == 0:
-            qp.drawPoint(self.known_point[0])
 
 
 if __name__ == '__main__':
