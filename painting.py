@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QFrame
 from PyQt5.QtGui import QPen, QPainter, QColor
 from PyQt5.QtCore import Qt, QPoint, QBasicTimer
 
+from my_modules import gip_len
 
 class SearchingMap(QFrame):
     def __init__(self, parent):
@@ -116,10 +117,6 @@ class SearchingMap(QFrame):
         new_x = (((new_y - first_y) / (fin_y - first_y)) * (fin_x - first_x)) + first_x
         return new_x, new_y, length + self.speed
 
-    # Рассчет длинны гипотенузы
-    def gip_len(self, first_x, first_y, fin_x, fin_y):
-        gip = math.sqrt((first_x - fin_x) ** 2 + (first_y - fin_y) ** 2)
-        return gip
 
 if __name__ == '__main__':
 
