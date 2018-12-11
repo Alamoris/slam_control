@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QDesktopWidget,
 from PyQt5.QtGui import QCursor, QPainter, QPen, QColor, QIcon
 
 from painting import SearchingMap
+from slam_brain import SlamBrain
+from debug_info import BottomDebugMenu
 
 
 class MainWidget(QMainWindow):
@@ -49,8 +51,6 @@ class RobotWidget(QWidget):
         self.initWorkArea()
 
     def initWorkArea(self):
-        #self.is_paused = False
-
         self.visual_widget = SetGraphWidget(self)
         left_frame, self.save_name, self.load_name, self.robot_value, self.speed_value = self.initMenuWidget()
 
@@ -64,6 +64,9 @@ class RobotWidget(QWidget):
         self.visual_widget.setFocus()
 
     def initMenuWidget(self):
+        # TODO: Сделать еще хотя бы один способ управления.
+        # TODO: Упрощенное управление, когда робот доезжает до точки и не видит больше свободных соединений, он ждет,
+        # TODO: пока они не появятся или не кончатся.
         widget = QWidget()
         widget.setFixedSize(200, 500)
 
@@ -132,7 +135,7 @@ class RobotWidget(QWidget):
         with open(self.load_name.text() + '.json', 'r') as infile:
             connections, points = json.load(infile)
 
-        self.visual_widget.connections = connections
+        self.visual_widget.connections = [(x[0], x[1]) for x in connections]
         self.visual_widget.point_arr = [QPoint(x[0], x[1]) for x in points]
 
         self.visual_widget.update()
@@ -140,12 +143,18 @@ class RobotWidget(QWidget):
 
     def start(self):
         if not self.maps_window:
+            # Initialize main algorithm of coordinating
+            self.slam_brain = SlamBrain()
             self.active_widget = MapCreating(self)
             self.active_widget.real_map.initMap(self.visual_widget.connections, self.visual_widget.point_arr)
             self.active_widget.searching_map.initStartOptions(self.visual_widget.connections,
                                                               self.visual_widget.point_arr,
-                                                              self.robot_value.text(),
-                                                              self.speed_value.text())
+                                                              self.speed_value.text(),
+                                                              self.slam_brain)
+            self.slam_brain.iniData(self.visual_widget.point_arr,
+                                    self.visual_widget.connections,
+                                    self.visual_widget.point_arr[0],
+                                    self.robot_value.text())
             self.active_widget.show()
 
     def pause(self):
@@ -188,7 +197,6 @@ class SetGraphWidget(QWidget):
         for x in self.connections:
             qp.drawLine(self.point_arr[x[0]], self.point_arr[x[1]])
 
-        # if len(self.point_arr) > 1:
         for x in self.point_arr:
             qp.setPen(dot_pen)
             qp.drawPoint(x)
@@ -250,8 +258,6 @@ class SetGraphWidget(QWidget):
             if circle_value <= radius ** 2:
                 right_point.append(x)
                 self.first_point = x
-            # if len(right_point) <= 0:
-            #    raise TypeError("Point is not found")
 
         min_point = 21
         for x in right_point:
@@ -270,18 +276,29 @@ class MapCreating(QWidget):
         super().__init__(parent, Qt.Window)
 
         self.searchBuild()
+        self.setWindowTitle('Map searching')
 
     def searchBuild(self):
+        window_geom = [200, 100, 1100, 900]
+
         self.searching_map = SearchingMap(self)
         self.real_map = RealMap(self)
+        self.debuger = BottomDebugMenu(self, [window_geom[2] - window_geom[0], window_geom[3] - window_geom[1]])
 
+        vbox = QVBoxLayout()
         hbox = QHBoxLayout()
 
         hbox.addWidget(self.searching_map)
         hbox.addWidget(self.real_map)
+        vbox.addLayout(hbox)
+        vbox.addWidget(self.debuger)
 
-        self.setGeometry(200, 200, 1100, 600)
-        self.setLayout(hbox)
+        # TODO: Добавить меню справа для дебага и вывода графиков, возможно стоит сделать его снизу
+        # TODO: Можно выводить графики реал тайм
+        # hbox.addWidget(...)
+
+        self.setGeometry(200, 100, 1100, 900)
+        self.setLayout(vbox)
 
 
 class RealMap(QFrame):
@@ -309,7 +326,6 @@ class RealMap(QFrame):
         for x in self.points:
             qp.setPen(dot_pen)
             qp.drawPoint(x)
-
 
 
 if __name__ == '__main__':
