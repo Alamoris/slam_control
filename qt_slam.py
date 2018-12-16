@@ -145,7 +145,7 @@ class RobotWidget(QWidget):
         if not self.maps_window:
             # Initialize main algorithm of coordinating
             self.slam_brain = SlamBrain()
-            self.active_widget = MapCreating(self)
+            self.active_widget = MapCreating(self, self.robot_value.text())
             self.active_widget.real_map.initMap(self.visual_widget.connections, self.visual_widget.point_arr)
             self.active_widget.searching_map.initStartOptions(self.visual_widget.connections,
                                                               self.visual_widget.point_arr,
@@ -272,18 +272,25 @@ class SetGraphWidget(QWidget):
 
 
 class MapCreating(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, robot_value):
         super().__init__(parent, Qt.Window)
 
-        self.searchBuild()
+        if not robot_value:
+            robot_value = 1
+        else:
+            robot_value = int(robot_value)
+
+        self.searchBuild(robot_value)
         self.setWindowTitle('Map searching')
 
-    def searchBuild(self):
+    def searchBuild(self, robot_value):
         window_geom = [200, 100, 1100, 900]
 
-        self.searching_map = SearchingMap(self)
+
         self.real_map = RealMap(self)
-        self.debuger = BottomDebugMenu(self, [window_geom[2] - window_geom[0], window_geom[3] - window_geom[1]])
+        self.debuger = BottomDebugMenu(self, [window_geom[2] - window_geom[0], window_geom[3] - window_geom[1]],
+                                       robot_value)
+        self.searching_map = SearchingMap(self, self.debuger.progress_bars)
 
         vbox = QVBoxLayout()
         hbox = QHBoxLayout()

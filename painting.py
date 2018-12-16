@@ -8,8 +8,10 @@ from my_modules import gip_len
 
 
 class SearchingMap(QFrame):
-    def __init__(self, parent):
+    def __init__(self, parent, progress_bars):
         super().__init__(parent)
+
+        self.progress_bars = progress_bars
         self.initMain()
 
     def initMain(self):
@@ -40,6 +42,7 @@ class SearchingMap(QFrame):
 
     def paintEvent(self, event):
         qp = QPainter(self)
+
         self.painttt(qp)
 
     def painttt(self, qp):
@@ -47,6 +50,7 @@ class SearchingMap(QFrame):
 
         col = QColor(0, 255, 255)
         robot_rect_pen = QPen(QColor(0, 0, 0))
+
 
         i = 0
         for robot in self.slam_brain.robots:
@@ -61,6 +65,7 @@ class SearchingMap(QFrame):
 
             qp.setPen(QPen(QColor(0, 0, 0)))
             qp.drawText(x2 - 2, y2 + 6, '{0}'.format(i))
+
             i += 1
 
     def print_passed_connections(self, qp):
@@ -79,5 +84,8 @@ class SearchingMap(QFrame):
                     qp.drawText(self.points[x][0] + 10, self.points[x][1] - 10, "{0}".format(x))
 
     def timerEvent(self, event):
+        for i in range(len(self.slam_brain.robots)):
+            self.progress_bars[i].incrementValue()
+
         self.iterat += 1
         self.update()
