@@ -17,6 +17,10 @@ class BottomDebugMenu(QWidget):
         self.setStyleSheet("border:3px solid rgb(0, 0, 0);")
         self.setFixedSize(self.main_geometry[0] + 300, self.main_geometry[1] * 0.3)
 
+        self.not_taked_debug = []
+        self.booked_debug = []
+        self.progressed_debug = []
+
         #vbox = QVBoxLayout()
 
         hbox = self.robotInfo()
@@ -25,24 +29,14 @@ class BottomDebugMenu(QWidget):
 
         self.setLayout(hbox)
 
-    def mainInfo(self):
-        # TODO: Колличество тактов алгоритма
-        # TODO: Пройденный путь каждым роботом
-        #vbox = QVBoxLayout()
-        #vbox.addWidget(QLabel('Not taked'))
-        #vbox.addWidget(QLabel(value))
-        #vbox.addWidget(QLabel('Booked'))
-        #vbox.addWidget(QLabel(value))
-        #vbox.addWidget(QLabel('Progressed'))
-        #vbox.addWidget(QLabel(value))
-        #vbox.addWidget(QLabel('Passed'))
-        #vbox.addWidget(QLabel(value))
-
-        pause_button = QPushButton('Pause searching')
-        #pause_button.clicked.connect(...)
+    def updateDebugInfo(self, not_taked=[], booked=[], progressed=[]):
+        if not_taked:
+            self.not_taked_debug = not_taked
 
     def robotInfo(self):
         hbox = QHBoxLayout()
+
+        # Создание прогрессбара на каждого робота, что бы мониторить пройденное ими расстояние
         for x in range(self.robot_value):
             vbox = QVBoxLayout()
 
@@ -53,17 +47,25 @@ class BottomDebugMenu(QWidget):
             vbox.addWidget(new_progress_bar)
             hbox.addLayout(vbox)
 
+        # Прогресс бар для вывода расстояния пройденного всеми роботами
+        vbox = QVBoxLayout()
+        vbox.addWidget(QLabel('Total way length'))
+        new_progress_bar = ProgressBar()
+        new_progress_bar.setFixedSize(150, self.main_geometry[1] * 0.28)
+        self.progress_bars.append(new_progress_bar)
+        vbox.addWidget(new_progress_bar)
+        hbox.addLayout(vbox)
+
+        # Пройденное количество тактов алгоритма
+        vbox = QVBoxLayout()
+        vbox.addWidget(QLabel('The number of cycles'))
+        new_progress_bar = ProgressBar()
+        new_progress_bar.setFixedSize(150, self.main_geometry[1] * 0.28)
+        self.progress_bars.append(new_progress_bar)
+        vbox.addWidget(new_progress_bar)
+        hbox.addLayout(vbox)
+
         return hbox
-
-
-class DebugInfo(QWidget):
-    def __init__(self, parent):
-        super().__init__(parent)
-
-        self.buildDebuger()
-
-    def buildDebuger(self):
-        ...
 
 
 class ProgressBar(QFrame):
@@ -101,17 +103,17 @@ class ProgressBar(QFrame):
         h = self.height()
 
         line_step = int(round(h / 4))
-        qp.setPen(QPen(QColor(255, 255, 255)))
+        qp.setPen(QPen(QColor(60, 179, 113)))
         qp.setBrush(QColor(60, 179, 113))
 
         cur_heigth = self.value * (h / (self.num[0] + self.num[2]))
         if h / self.num[0] + self.num[2] > 1:
             drow_heigth = h - cur_heigth
-            qp.drawRect(0, drow_heigth, w, cur_heigth)
+            qp.drawRect(3, drow_heigth, w - 7, cur_heigth )
 
         qp.setPen(QPen(Qt.black, 1, Qt.SolidLine))
         qp.setBrush(Qt.NoBrush)
-        qp.drawRect(1, 0, w - 2, h - 1)
+        qp.drawRect(0, 0, w - 2, h - 3)
 
         i = 0
         for step in range(line_step, line_step * 4, line_step):

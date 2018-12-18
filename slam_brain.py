@@ -9,10 +9,15 @@ from my_modules import reversedRange, dejkstraAlg, takeWay, normalizeDejkstraVal
 
 class SlamBrain():
     def __init__(self):
+        # Устал делать, костыль на цикл программы
+        self.command = 0
+
         self.not_taked = []
         self.booked = []
         self.progressed = []
         self.passed_connections = []
+
+        self.finish_fl = False
 
     def iniData(self, points, connections, first_point, robots):
         if not robots:
@@ -27,18 +32,18 @@ class SlamBrain():
         first_x, first_y, fin_x, fin_y = robot.paintngStep()
 
         if first_x is True:
-            if not self.not_taked and\
-                    not self.booked and\
-                    not self.progressed:
-                print("Hurray your quest is complite")
-
             self.takeNewTask((fin_x, fin_y), robot)
             robot.pos_length = 0
+
+            if self.finish_fl is True:
+                return True, True, True, True
+
+            self.command += 1
             return fin_x, fin_y, fin_x, fin_y
 
         return first_x, first_y, fin_x, fin_y
 
-    # Возврящает все точки соединенные с данной
+    # Добавляет в массив not_taked все точки, с которыми соединена пераданная
     def checkForNewConnections(self, point):
         new_connections = []
         for i in self.connections:
@@ -49,9 +54,9 @@ class SlamBrain():
                         i not in self.not_taked:
                     self.not_taked.append(i)
 
-
         return new_connections
 
+    # Возвраящет массив доступных соединений, с которыми соединена переданная точка
     def checkForAvailableConnections(self, point):
         available_connections = []
         point_index = self.points.index(point)
@@ -69,8 +74,8 @@ class SlamBrain():
 
         point_index = self.points.index(point)
         # Проверка, находится ли точка в массиве обрабатываемых точек, если да, убираем ее оттуда
-        if point_index in self.progressed:
-            self.progressed.remove(point_index)
+        if point in self.progressed:
+            self.progressed.remove(point)
 
         for x in self.booked:
             if point_index == x[1]:
@@ -78,8 +83,8 @@ class SlamBrain():
 
     def takeNewTask(self, point, robot):
         # TODO: Новая функция управления описание в qt_slam
-
         # TODO: Сделать функцию, которая будет возвращать всех роботов в первую точку(или в точку, которую указали), после того, как будут исследованы все соединения
+
         self.pointCheked(point)
 
         if robot.mission:
@@ -87,7 +92,9 @@ class SlamBrain():
             # TODO: идет в эту точку округлять значение положения робота и изменить его движение к самой ближней точке
             new_point = self.points[robot.mission.pop()]
             robot.pos_connection = [robot.pos_connection[1], new_point]
-            self.progressed.append((robot.pos_connection[1], new_point))
+            #self.progressed.append((robot.pos_connection[1], new_point))
+            self.progressed.append(new_point)
+
         else:
             # Считаю сколько свободных роботов находится в этой точке в данный момент
             robots_in_point = []
@@ -105,6 +112,10 @@ class SlamBrain():
                 # TODO: Переделать функцию на управление одним роботом и проверить на работу, если роботов больше, чем соединений в точке
                 print('teke newt liner connection')
                 self.haveLinerConnections(connections, robots_in_point)
+            elif not connections and not self.not_taked and not self.booked:
+                print('Hurray')
+                #self.passed_connections.append(point)
+                self.finish_fl = True
             else:
                 print('have not new liner connections')
 
@@ -143,7 +154,7 @@ class SlamBrain():
 
                     next_connection = [new_mission.pop(), new_mission.pop()]
 
-                    self.progressed.append(next_connection[1])
+                    self.progressed.append(self.points[next_connection[1]])
 
                 next_connection = [self.points[next_connection[0]], self.points[next_connection[1]]]
                 robot.mission = new_mission
@@ -178,8 +189,7 @@ class SlamBrain():
 
                 self.not_taked.remove(next_connection)
 
-        self.progressed.append(next_connection[1])
-
+        self.progressed.append(self.points[next_connection[1]])
 
     def returnToBase(self):
         for robot in self.robots:

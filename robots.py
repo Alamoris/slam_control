@@ -10,7 +10,7 @@ class Robot():
         self.mission = []
 
         # Расстояние в пикселях(дискрета), которое робот будет проходить за один цикл
-        self.speed = 1
+        self.speed = 3
 
     def paintngStep(self):
         if len(self.pos_connection) == 1:

@@ -1,7 +1,7 @@
 import sys
 import json
 
-from PyQt5.QtCore import QBasicTimer, pyqtSignal, Qt, QPoint
+from PyQt5.QtCore import QBasicTimer, pyqtSignal, Qt, QPoint, QObject
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QDesktopWidget, QLabel, QFrame, QLineEdit,
                              QHBoxLayout, QVBoxLayout, QPushButton, QAction)
 from PyQt5.QtGui import QCursor, QPainter, QPen, QColor, QIcon
@@ -299,10 +299,6 @@ class MapCreating(QWidget):
         hbox.addWidget(self.real_map)
         vbox.addLayout(hbox)
         vbox.addWidget(self.debuger)
-
-        # TODO: Добавить меню справа для дебага и вывода графиков, возможно стоит сделать его снизу
-        # TODO: Можно выводить графики реал тайм
-        # hbox.addWidget(...)
 
         self.setGeometry(200, 100, 1100, 900)
         self.setLayout(vbox)
